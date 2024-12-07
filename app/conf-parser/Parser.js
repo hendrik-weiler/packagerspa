@@ -51,7 +51,7 @@ export class Parser {
         if(this.currentToken.type === type) {
             this.currentToken = this.lexer.getNextToken();
         } else {
-            throw new Error('Unexpected token: ' + this.currentToken.type);
+            this.lexer.error(type);
         }
     }
 
@@ -99,7 +99,14 @@ export class Parser {
      * Parses the file
      */
     parse() {
-        while ([Type.COMMENT, Type.PACKAGE, Type.SEMICOLON, Type.ROUTES, Type.UI].includes(this.currentToken.type)) {
+        while ([
+            Type.COMMENT,
+            Type.PACKAGE,
+            Type.SEMICOLON,
+            Type.ROUTES,
+            Type.UI,
+            Type.AUTHCALLBACK
+        ].includes(this.currentToken.type)) {
 
             if(this.currentToken.type === Type.PACKAGE) {
                 this.eat(Type.PACKAGE);
@@ -129,6 +136,14 @@ export class Parser {
                 this.checkUi();
 
                 this.eat(Type.BRACKETS_END);
+            }
+            if(this.currentToken.type === Type.AUTHCALLBACK) {
+                this.eat(Type.AUTHCALLBACK);
+                if(this.currentToken.type === Type.VALUE) {
+                    this.app.authCallback = this.currentToken.value;
+                    this.eat(Type.VALUE);
+                }
+                this.eat(Type.SEMICOLON);
             }
             if(this.currentToken.type === Type.COMMENT) {
                 this.eat(Type.COMMENT);
@@ -172,6 +187,24 @@ export class Parser {
     }
 
     /**
+     * Parses the route layout
+     * @param route
+     */
+    parseRouteLayout(route) {
+        if(this.currentToken.type === Type.COMMA) {
+            this.eat(Type.COMMA);
+            if(this.currentToken.type === Type.LAYOUT) {
+                this.eat(Type.LAYOUT);
+                this.eat(Type.COLON);
+                if(this.currentToken.type === Type.VALUE) {
+                    route.layout = this.currentToken.value;
+                    this.eat(Type.VALUE);
+                }
+            }
+        }
+    }
+
+    /**
      * Evaluates the routes
      */
     checkRoutes() {
@@ -184,7 +217,13 @@ export class Parser {
                     let template = this.currentToken.value;
                     let route = new Route(path, template, []);
                     this.eat(Type.VALUE);
+                    this.parseRouteLayout(route);
                     this.loopThroughList((value) => route.depends.push(value));
+                    this.parseRouteLayout(route);
+                    if(this.currentToken.type === Type.ERROR404) {
+                        this.eat(Type.ERROR404);
+                        route.error404 = true;
+                    }
                     this.app.routes.push(route);
                     this.eat(Type.SEMICOLON);
                     break;

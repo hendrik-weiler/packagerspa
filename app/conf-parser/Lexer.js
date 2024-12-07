@@ -268,14 +268,46 @@ export class Lexer {
             return new Token(Type.STYLESHEETS, null);
         }
 
+        if(this.findKeyword('layout', 6)) {
+            this.advance(6);
+            return new Token(Type.LAYOUT, null);
+        }
+
+        if(this.findKeyword('authcallback', 12)) {
+            this.advance(12);
+            return new Token(Type.AUTHCALLBACK, null);
+        }
+
+        if(this.findKeyword('error404', 8)) {
+            this.advance(8);
+            return new Token(Type.ERROR404, null);
+        }
+
         this.error();
     }
 
     /**
      * Throws an error
+     * @param type The type to consume from parser
      */
-    error() {
-        throw new Error(`Invalid character ${this.currentChar} at line ${this.line} position ${this.linePos}`);
+    error(type) {
+        let codeSnippet = '',
+            tokenType = type || 'none';
+        for(let i = this.pos - 10; i < this.pos; i++) {
+            if(i < 0) break;
+            codeSnippet += this.text[i];
+        }
+        for(let i = 0; i < 10; i++) {
+            if(this.pos + i >= this.text.length) break;
+            codeSnippet += this.text[this.pos + i];
+        }
+        if(tokenType !== 'none') {
+            throw new Error(`Invalid character ${this.currentChar} at line ${this.line} position ${this.linePos}: 
+            ${codeSnippet} expected ${tokenType}`);
+        } else {
+            throw new Error(`Invalid character ${this.currentChar} at line ${this.line} position ${this.linePos}: 
+            ${codeSnippet}`);
+        }
     }
 
     /**

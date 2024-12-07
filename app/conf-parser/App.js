@@ -18,6 +18,12 @@ export class App {
     routes = [];
 
     /**
+     * A callback function when routing happens
+     * @type {[]}
+     */
+    authcallback = null;
+
+    /**
      * The user interface definition
      * @type {null}
      */

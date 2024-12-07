@@ -7,7 +7,7 @@ import {Builder} from "./app/builder/Builder.js";
 const fileContents = fs.readFileSync('./conf/app.conf').toString();
 
 let lexer = new Lexer(fileContents);
-
+//console.log(lexer.sum());
 let app = new App();
 let parser = new Parser(lexer, app);
 

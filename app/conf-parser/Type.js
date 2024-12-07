@@ -25,4 +25,7 @@ export var Type = {
     ASSETS : 'assets',
     INCLUDE : 'include',
     STYLESHEETS : 'stylesheets',
+    LAYOUT : 'layout',
+    AUTHCALLBACK : 'authcallback',
+    ERROR404 : 'error404',
 };
