@@ -59,7 +59,7 @@ export class Parser {
      * Checks package
      */
     checkPackage() {
-        while ([Type.OPTION, Type.COMMENT, Type.REQUIRES, Type.SEMICOLON, Type.DIRECTORY].includes(this.currentToken.type)) {
+        while ([Type.OPTION, Type.COMMENT, Type.REQUIRES, Type.SEMICOLON, Type.DIRECTORY, Type.FILE].includes(this.currentToken.type)) {
             switch(this.currentToken.type) {
                 case Type.REQUIRES:
                     this.eat(Type.REQUIRES);
@@ -73,6 +73,14 @@ export class Parser {
                     this.eat(Type.DIRECTORY);
                     if (this.currentToken.type === Type.VALUE) {
                         this.currentPackage.directories.push(this.currentToken.value);
+                        this.eat(Type.VALUE);
+                        this.eat(Type.SEMICOLON);
+                    }
+                    break;
+                case Type.FILE:
+                    this.eat(Type.FILE);
+                    if (this.currentToken.type === Type.VALUE) {
+                        this.currentPackage.files.push(this.currentToken.value);
                         this.eat(Type.VALUE);
                         this.eat(Type.SEMICOLON);
                     }
@@ -191,15 +199,12 @@ export class Parser {
      * @param route
      */
     parseRouteLayout(route) {
-        if(this.currentToken.type === Type.COMMA) {
-            this.eat(Type.COMMA);
-            if(this.currentToken.type === Type.LAYOUT) {
-                this.eat(Type.LAYOUT);
-                this.eat(Type.COLON);
-                if(this.currentToken.type === Type.VALUE) {
-                    route.layout = this.currentToken.value;
-                    this.eat(Type.VALUE);
-                }
+        if(this.currentToken.type === Type.LAYOUT) {
+            this.eat(Type.LAYOUT);
+            this.eat(Type.COLON);
+            if(this.currentToken.type === Type.VALUE) {
+                route.layout = this.currentToken.value;
+                this.eat(Type.VALUE);
             }
         }
     }
@@ -219,10 +224,12 @@ export class Parser {
                     this.eat(Type.VALUE);
                     this.parseRouteLayout(route);
                     this.loopThroughList((value) => route.depends.push(value));
-                    this.parseRouteLayout(route);
-                    if(this.currentToken.type === Type.ERROR404) {
-                        this.eat(Type.ERROR404);
-                        route.error404 = true;
+                    while ([Type.COMMA, Type.LAYOUT, Type.INDEX, Type.ERROR404].includes(this.currentToken.type)) {
+                        if(this.currentToken.type === Type.COMMA) {
+                            this.eat(Type.COMMA);
+                        }
+                        this.routeOptions(route);
+                        this.parseRouteLayout(route);
                     }
                     this.app.routes.push(route);
                     this.eat(Type.SEMICOLON);
@@ -234,6 +241,21 @@ export class Parser {
             if(this.currentToken.type === Type.SEMICOLON) {
                 this.eat(Type.SEMICOLON);
             }
+        }
+    }
+
+    /**
+     * Parses the route options
+     * @param route The route
+     */
+    routeOptions(route) {
+        if(this.currentToken.type === Type.ERROR404) {
+            this.eat(Type.ERROR404);
+            route.error404 = true;
+        }
+        if(this.currentToken.type === Type.INDEX) {
+            this.eat(Type.INDEX);
+            route.index = true;
         }
     }
 

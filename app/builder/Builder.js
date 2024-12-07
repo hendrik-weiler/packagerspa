@@ -125,41 +125,58 @@ export class Builder {
             i,
             isJs = false,
             isCSS = false;
+        for(i=0; i < pkg.files.length; i++) {
+            let file = pkg.files[i];
+            let result = this.getContenFromFile(content, file);
+            content = result.content;
+            isJs = result.isJs;
+            isCSS = result.isCSS;
+        }
         for(i=0; i < pkg.directories.length; i++) {
             let dir = pkg.directories[i];
             for(let file of globSync(dir)) {
-                let ext = path.extname(file);
-                if(ext === '.html') {
-                    let filepath = this.convertFileNameToVariableName(file,'.html');
-                    let fileContent = this.replaceTemplate(fs.readFileSync(file).toString());
-                    content += 'var '+ filepath +' = `' + fileContent + '`;\n';
-                    isJs = true;
-                } else if(ext === '.svg') {
-                    let filepath = this.convertFileNameToVariableName(file,'.svg');
-                    let base64Content = this.toBase64('image/svg+xml', file);
-                    let fileContent = 'var '+ filepath +' = "' + base64Content +'";\n';
-                    this.imagesToEmbed[filepath] = base64Content;
-                    content += fileContent;
-                    isJs = true;
-                } else if(ext === '.png') {
-                    let filepath = this.convertFileNameToVariableName(file,'.png');
-                    let base64Content = this.toBase64('image/png', file);
-                    let fileContent = 'var '+ filepath +' = "' + base64Content +'";\n';
-                    this.imagesToEmbed[filepath] = base64Content;
-                    content += fileContent;
-                    isJs = true;
-                } else if(ext === '.js') {
-                    content += fs.readFileSync(file) + ';\n';
-                    isJs = true;
-                } else if(ext === '.css') {
-                    content += fs.readFileSync(file) + ';\n';
-                    isCSS = true;
-                }
+                let result = this.getContenFromFile(content, file);
+                content = result.content;
+                isJs = result.isJs;
+                isCSS = result.isCSS;
             }
         }
         if(isJs) pkgName += '.js';
         if(isCSS) pkgName += '.css';
         fs.writeFileSync(pkgName, content);
+    }
+
+    getContenFromFile(content, file) {
+        let ext = path.extname(file),
+            isJs = false,
+            isCSS = false;
+        if(ext === '.html') {
+            let filepath = this.convertFileNameToVariableName(file,'.html');
+            let fileContent = this.replaceTemplate(fs.readFileSync(file).toString());
+            content += 'var '+ filepath +' = `' + fileContent + '`;\n';
+            isJs = true;
+        } else if(ext === '.svg') {
+            let filepath = this.convertFileNameToVariableName(file,'.svg');
+            let base64Content = this.toBase64('image/svg+xml', file);
+            let fileContent = 'var '+ filepath +' = "' + base64Content +'";\n';
+            this.imagesToEmbed[filepath] = base64Content;
+            content += fileContent;
+            isJs = true;
+        } else if(ext === '.png') {
+            let filepath = this.convertFileNameToVariableName(file,'.png');
+            let base64Content = this.toBase64('image/png', file);
+            let fileContent = 'var '+ filepath +' = "' + base64Content +'";\n';
+            this.imagesToEmbed[filepath] = base64Content;
+            content += fileContent;
+            isJs = true;
+        } else if(ext === '.js') {
+            content += fs.readFileSync(file) + ';\n';
+            isJs = true;
+        } else if(ext === '.css') {
+            content += fs.readFileSync(file) + ';\n';
+            isCSS = true;
+        }
+        return {content, isJs, isCSS};
     }
 
     /**
@@ -185,6 +202,7 @@ export class Builder {
                     template : "${route.template}",
                     error404 : ${route.error404},
                     layout : "${route.layout}",
+                    index : ${route.index},
                     depends : ${JSON.stringify(route.depends)}
                 });
             \n`;

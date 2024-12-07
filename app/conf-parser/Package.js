@@ -22,6 +22,12 @@ export class Package {
     directories = [];
 
     /**
+     * Files
+     * @type {[]}
+     */
+    files = [];
+
+    /**
      * Options
      * @type {[]}
      */

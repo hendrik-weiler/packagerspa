@@ -283,6 +283,16 @@ export class Lexer {
             return new Token(Type.ERROR404, null);
         }
 
+        if(this.findKeyword('index', 5)) {
+            this.advance(5);
+            return new Token(Type.INDEX, null);
+        }
+
+        if(this.findKeyword('file', 4)) {
+            this.advance(4);
+            return new Token(Type.FILE, null);
+        }
+
         this.error();
     }
 

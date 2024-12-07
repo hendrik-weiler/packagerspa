@@ -33,6 +33,12 @@ export class Route {
     error404 = false;
 
     /**
+     * Is this the index route
+     * @type {boolean}
+     */
+    index = false;
+
+    /**
      * Constructor
      * @param path The path of the route
      * @param template The template of the route

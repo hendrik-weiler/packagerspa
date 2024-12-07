@@ -16,6 +16,12 @@ class Router {
     route404 = null;
 
     /**
+     * The index route
+     * @type {null}
+     */
+    indexRoute = null;
+
+    /**
      * The app node
      * @type {Element}
      */
@@ -37,6 +43,9 @@ class Router {
       if(route.error404) {
         this.route404 = route;
       }
+        if(route.index) {
+            this.indexRoute = route;
+        }
       this.routes.push(route);
     }
 
@@ -46,8 +55,14 @@ class Router {
     route() {
       let path = window.location.hash,
           found = false;
+        if(path === '') {
+            if(this.indexRoute) {
+                this.appNode.innerHTML = public_templates_test_html;
+                return;
+            }
+        }
       for (let route of this.routes) {
-        if (new RegExp('^#'+route.path+'$').test(path)) {
+        if (new RegExp('^#'+route.path+'(/)?$').test(path)) {
           found = true;
           console.log('Route found');
           this.appNode.innerHTML = public_templates_test_html;

@@ -28,4 +28,6 @@ export var Type = {
     LAYOUT : 'layout',
     AUTHCALLBACK : 'authcallback',
     ERROR404 : 'error404',
+    INDEX: 'index',
+    FILE : 'file',
 };
