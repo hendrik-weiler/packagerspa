@@ -97,3 +97,11 @@ ui {
     stylesheets ['bootstrap','style']; // css
 }
 ```
+
+### Images and background images
+
+You can use the `data-bg-src="img/logo.svg"` attribute to load background images.
+It will be added to the style attribute of the element.
+
+For images `data-src="img/logo.svg"` to set the src of the image.
+You can additionally use `<img embed src="img/logo.svg">` to embed the image in the template.
