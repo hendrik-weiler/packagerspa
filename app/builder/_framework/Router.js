@@ -267,30 +267,50 @@ class Router {
         if(route._node) route._node.classList.remove('hidden');
     }
 
+    async walkThroughMiddlewares(route, middlewares ,next) {
+        if(middlewares.length === 0) {
+            next();
+            return;
+        }
+        let middleware = middlewares.shift(),
+            func = window[middleware];
+        if(typeof func === 'function') {
+            func(route, () => {
+                this.walkThroughMiddlewares(route, middlewares, next);
+            });
+        } else {
+            console.log('Middleware not found: ' + middleware);
+            next();
+        }
+    }
+
     /**
      * Calls a route
      * @param route The route
      */
     async callRoute(route) {
-        for (let dep of route.depends) {
-            if(!this.app.isPackageLoaded(dep.replace(':js','').replace(':css',''))) {
-                this.app.showPi();
-                if(/:js/.test(dep)) {
-                    await this.app.loadJs(dep.replace(':js',''));
+        console.log('view route', route);
+        this.walkThroughMiddlewares(route, this.app.middlewares.slice(), async () => {
+            for (let dep of route.depends) {
+                if(!this.app.isPackageLoaded(dep.replace(':js','').replace(':css',''))) {
+                    this.app.showPi();
+                    if(/:js/.test(dep)) {
+                        await this.app.loadJs(dep.replace(':js',''));
+                    }
+                    if(/:css/.test(dep)) {
+                        await this.app.loadCss(dep.replace(':css',''));
+                    }
+                    this.prepareViews(this.unresolvedRoutes.slice());
+                    this.app.hidePi();
                 }
-                if(/:css/.test(dep)) {
-                    await this.app.loadCss(dep.replace(':css',''));
-                }
-                this.prepareViews(this.unresolvedRoutes);
-                this.app.hidePi();
             }
-        }
-        console.log('view route');
-        this.showRouteContent(route);
-        this.updateTemplate(route);
-        this.app.events.trigger('display', {
-            mode : 'display',
-            route : route
+
+            this.showRouteContent(route);
+            this.updateTemplate(route);
+            this.app.events.trigger('display', {
+                mode : 'display',
+                route : route
+            });
         });
     }
 }

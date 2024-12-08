@@ -39,6 +39,12 @@ export class Route {
     index = false;
 
     /**
+     * Is this a private route
+     * @type {boolean}
+     */
+    private = false;
+
+    /**
      * Constructor
      * @param path The path of the route
      * @param template The template of the route

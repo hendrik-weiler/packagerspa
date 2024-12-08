@@ -16,10 +16,10 @@ class App {
     packageLoaded = [];
 
     /**
-     * The auth callback
-     * @type {null}
+     * The middleware functions
+     * @type {[]}
      */
-    authcallback = null;
+    middlewares = [];
 
     /**
      * The base packages to load
@@ -79,7 +79,7 @@ class App {
      * Initializes the application
      */
     async init(config) {
-        if(config.authcallback) this.authcallback = config.authcallback;
+        if(config.middlewares) this.middlewares = config.middlewares;
         if(config.basePackages) this.basePackages = config.basePackages;
         await this.loadBasePackages();
         this.router.prepareViews(this.router.routes);

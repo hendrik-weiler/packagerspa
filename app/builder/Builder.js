@@ -245,7 +245,8 @@ export class Builder {
                     error404 : ${route.error404},
                     layout : "${route.layout}",
                     index : ${route.index},
-                    depends : ${JSON.stringify(route.depends)}
+                    depends : ${JSON.stringify(route.depends)},
+                    private : ${route.private}
                 });
             \n`;
         }
@@ -274,7 +275,7 @@ export class Builder {
         scriptContent += '<script>' + this.addRoutes() + '</script>\n';
         scriptContent += `
         <script>app().init({
-            authcallback: "${app.authcallback}",
+            middlewares: ${JSON.stringify(app.middlewares)},
             basePackages : {
                 template : ${JSON.stringify(app.ui.template)},
                 assets : ${JSON.stringify(app.ui.assets)},

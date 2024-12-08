@@ -113,7 +113,7 @@ export class Parser {
             Type.SEMICOLON,
             Type.ROUTES,
             Type.UI,
-            Type.AUTHCALLBACK
+            Type.MIDDLEWARE
         ].includes(this.currentToken.type)) {
 
             if(this.currentToken.type === Type.PACKAGE) {
@@ -145,10 +145,10 @@ export class Parser {
 
                 this.eat(Type.BRACKETS_END);
             }
-            if(this.currentToken.type === Type.AUTHCALLBACK) {
-                this.eat(Type.AUTHCALLBACK);
+            if(this.currentToken.type === Type.MIDDLEWARE) {
+                this.eat(Type.MIDDLEWARE);
                 if(this.currentToken.type === Type.VALUE) {
-                    this.app.authcallback = this.currentToken.value;
+                    this.app.middlewares.push(this.currentToken.value);
                     this.eat(Type.VALUE);
                 }
                 this.eat(Type.SEMICOLON);
@@ -224,7 +224,7 @@ export class Parser {
                     this.eat(Type.VALUE);
                     this.parseRouteLayout(route);
                     this.loopThroughList((value) => route.depends.push(value));
-                    while ([Type.COMMA, Type.LAYOUT, Type.INDEX, Type.ERROR404].includes(this.currentToken.type)) {
+                    while ([Type.COMMA, Type.LAYOUT, Type.INDEX, Type.ERROR404, Type.PRIVATE].includes(this.currentToken.type)) {
                         if(this.currentToken.type === Type.COMMA) {
                             this.eat(Type.COMMA);
                         }
@@ -256,6 +256,10 @@ export class Parser {
         if(this.currentToken.type === Type.INDEX) {
             this.eat(Type.INDEX);
             route.index = true;
+        }
+        if(this.currentToken.type === Type.PRIVATE) {
+            this.eat(Type.PRIVATE);
+            route.private = true;
         }
     }
 

@@ -18,10 +18,10 @@ export class App {
     routes = [];
 
     /**
-     * A callback function when routing happens
+     * A collection of middleware functions
      * @type {[]}
      */
-    authcallback = null;
+    middlewares = [];
 
     /**
      * The user interface definition

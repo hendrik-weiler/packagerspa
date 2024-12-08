@@ -26,8 +26,9 @@ export var Type = {
     INCLUDE : 'include',
     STYLESHEETS : 'stylesheets',
     LAYOUT : 'layout',
-    AUTHCALLBACK : 'authcallback',
+    MIDDLEWARE : 'middleware',
     ERROR404 : 'error404',
     INDEX: 'index',
     FILE : 'file',
+    PRIVATE : 'private',
 };

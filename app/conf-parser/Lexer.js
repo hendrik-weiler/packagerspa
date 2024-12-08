@@ -273,9 +273,9 @@ export class Lexer {
             return new Token(Type.LAYOUT, null);
         }
 
-        if(this.findKeyword('authcallback', 12)) {
-            this.advance(12);
-            return new Token(Type.AUTHCALLBACK, null);
+        if(this.findKeyword('middleware', 10)) {
+            this.advance(10);
+            return new Token(Type.MIDDLEWARE, null);
         }
 
         if(this.findKeyword('error404', 8)) {
@@ -291,6 +291,11 @@ export class Lexer {
         if(this.findKeyword('file', 4)) {
             this.advance(4);
             return new Token(Type.FILE, null);
+        }
+
+        if(this.findKeyword('private', 7)) {
+            this.advance(7);
+            return new Token(Type.PRIVATE, null);
         }
 
         this.error();
