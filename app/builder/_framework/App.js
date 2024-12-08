@@ -101,7 +101,7 @@ class App {
             script.onerror = () => {
                 reject();
             }
-            script.src = path + '.data.js';
+            script.src = 'packages/' + path + '.data.js?'+Date.now();
             document.body.appendChild(script);
         });
     }
@@ -115,7 +115,7 @@ class App {
         return new Promise((accept,reject) => {
             let link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = path + '.data.css';
+            link.href = 'packages/' + path + '.data.css?'+Date.now();
             document.body.appendChild(link);
             this.packageLoaded.push(path);
             accept();

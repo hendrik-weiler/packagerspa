@@ -73,6 +73,7 @@ export class Builder {
         }
         this.createIndex();
         fs.cpSync('app/builder/_framework', 'build/_framework', {recursive: true});
+        fs.cpSync('public/fonts', 'build/fonts', {recursive: true});
     }
 
     /**
@@ -83,6 +84,7 @@ export class Builder {
             fs.rmSync('build', {recursive: true});
         }
         fs.mkdirSync('build');
+        fs.mkdirSync('build/packages');
     }
 
     /**
@@ -131,7 +133,7 @@ export class Builder {
      */
     createPackage(pkg) {
         console.log('Creating package: ' + pkg.name);
-        let pkgName = 'build/' + pkg.name + '.data',
+        let pkgName = 'build/packages/' + pkg.name + '.data',
             content = '',
             i,
             isJs = false,
@@ -264,10 +266,10 @@ export class Builder {
             throw new Error('UI not defined');
         }
 
-        scriptContent += '<script src="_framework/Router.js"></script>\n';
-        scriptContent += '<script src="_framework/Events.js"></script>\n';
-        scriptContent += '<script src="_framework/App.js"></script>\n';
-        scriptContent += '<link rel="stylesheet" href="_framework/app.css"/>\n';
+        scriptContent += '<script src="_framework/Router.js?'+Date.now()+'"></script>\n';
+        scriptContent += '<script src="_framework/Events.js?'+Date.now()+'"></script>\n';
+        scriptContent += '<script src="_framework/App.js?'+Date.now()+'"></script>\n';
+        scriptContent += '<link rel="stylesheet" href="_framework/app.css?'+Date.now()+'"/>\n';
 
         scriptContent += '<script>' + this.addRoutes() + '</script>\n';
         scriptContent += `

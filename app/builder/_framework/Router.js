@@ -117,6 +117,17 @@ class Router {
     }
 
     /**
+     * Removes an unresolved route
+     * @param route The route
+     */
+    removeUnresolvedRoute(route) {
+        if(this.unresolvedRoutes.includes(route)) {
+            let index = this.unresolvedRoutes.indexOf(route);
+            this.unresolvedRoutes.splice(index, 1);
+        }
+    }
+
+    /**
      * Prepares the views for the application
      */
     prepareViews(routes) {
@@ -140,6 +151,7 @@ class Router {
                     layoutNode = null;
                 if(!existingLayoutNode) {
                     layoutNode = this.createNodeFromTemplate(layoutTemplate);
+                    console.log('layout node', layoutNode);
                     if (layoutNode) {
                         this.app.layoutNode.appendChild(layoutNode);
                         route._layoutvarname = layoutTemplate;
@@ -148,6 +160,7 @@ class Router {
                             mode: 'layout',
                             route: route
                         });
+                        this.removeUnresolvedRoute(route);
                     } else {
                         console.log('Layout not found: ' + layoutTemplate);
                         this.unresolvedRoutes.push(route);
@@ -156,6 +169,7 @@ class Router {
                     layoutNode = existingLayoutNode;
                     route._layoutnode = layoutNode;
                 }
+
                 if(!layoutContent[layoutTemplate]) {
                     layoutContent[layoutTemplate] = [];
                 }
@@ -173,8 +187,11 @@ class Router {
                             route: route
                         });
                         layoutContent[layoutTemplate].push(node);
+                        this.removeUnresolvedRoute(route);
                     } else {
                         console.log('Template not found: ' + template);
+                        console.log(route)
+                        this.unresolvedRoutes.push(route);
                     }
                 } else {
                     route._node = existingTemplateNode;
@@ -221,6 +238,17 @@ class Router {
                     img.src = window[src];
                 } else {
                     console.log('Image not found: ' + src);
+                }
+            }
+            let elmBgs = node.querySelectorAll('[data-bg-src]');
+            i = 0;
+            for(i=0; i < elmBgs.length; i++) {
+                let elmBg = elmBgs[i],
+                    src = this.convertFileNameToVariableName(elmBg.dataset.bgSrc, 'public/');
+                if(window[src]) {
+                    elmBg.style.backgroundImage = 'url(' + window[src] + ')';
+                } else {
+                    console.log('Background image not found: ' + src);
                 }
             }
         }

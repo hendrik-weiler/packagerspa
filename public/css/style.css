@@ -1,3 +1,103 @@
+:root {
+    --primary-color: #DF7373;
+    --dark-gray: #494949;
+    --border-gray: #979797;
+    --background-gray: #F2F2F2;
+    --success: #DDFFB7;
+}
+
+/* open-sans-300 - latin */
+@font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 300;
+    src: url('./fonts/open-sans-v40-latin-300.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* open-sans-regular - latin */
+@font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: url('./fonts/open-sans-v40-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* open-sans-700 - latin */
+@font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: url('./fonts/open-sans-v40-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Open Sans', sans-serif;
+    height: 100vh;
+    color: var(--dark-gray);
+    font-weight: 300;
+}
+
+textarea:focus,
+textarea.form-control:focus,
+input.form-control:focus,
+input[type=text]:focus,
+input[type=password]:focus,
+input[type=email]:focus,
+input[type=number]:focus,
+[type=text].form-control:focus,
+[type=password].form-control:focus,
+[type=email].form-control:focus,
+[type=tel].form-control:focus,
+[contenteditable].form-control:focus {
+    box-shadow: none;
+}
+
+
+a {
+    color: var(--dark-gray);
+}
+
+h1 {
+    color: var(--primary-color);
+    font-size: 30px;
+    font-weight: 300;
+}
+
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:active:focus,
+.btn-primary:focus {
+    background-color: var(--primary-color);
+    border: none;
+}
+
+.alert-success {
+    background-color: var(--success);
+    color: var(--dark-gray);
+    border: none;
+}
+
+.layout {
+    max-width: 400px;
+}
+
+.layout h1 {
+    text-align: center;
+}
+
+.layout p {
+    font-size: 16px;
+    text-align: center;
+}
+
+.layout .form-control {
+    border-color: var(--border-gray);
+    background-color: var(--background-gray);
+}
+
+dialog {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
 }
