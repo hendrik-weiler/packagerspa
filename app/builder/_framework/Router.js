@@ -151,12 +151,11 @@ class Router {
                     layoutNode = null;
                 if(!existingLayoutNode) {
                     layoutNode = this.createNodeFromTemplate(layoutTemplate);
-                    console.log('layout node', layoutNode);
                     if (layoutNode) {
                         this.app.layoutNode.appendChild(layoutNode);
                         route._layoutvarname = layoutTemplate;
                         route._layoutnode = layoutNode;
-                        this.app.events.trigger('prepare', {
+                        this.app.events.trigger('prepare_layout', {
                             mode: 'layout',
                             route: route
                         });
@@ -182,11 +181,10 @@ class Router {
                         this.app.layoutNode.appendChild(node);
                         route._varname = template;
                         route._node = node;
-                        this.app.events.trigger('prepare', {
-                            mode: 'template',
+                        layoutContent[layoutTemplate].push({
+                            node: node,
                             route: route
                         });
-                        layoutContent[layoutTemplate].push(node);
                         this.removeUnresolvedRoute(route);
                     } else {
                         console.log('Template not found: ' + template);
@@ -195,7 +193,10 @@ class Router {
                     }
                 } else {
                     route._node = existingTemplateNode;
-                    layoutContent[layoutTemplate].push(existingTemplateNode);
+                    layoutContent[layoutTemplate].push({
+                        node: existingTemplateNode,
+                        route: route
+                    });
                 }
             }
             for(let layout in layoutContent) {
@@ -203,8 +204,12 @@ class Router {
                 if(layoutNode) {
                     let contentNode = layoutNode.querySelector('.content');
                     if(contentNode) {
-                        for (let node of layoutContent[layout]) {
-                            contentNode.appendChild(node);
+                        for (let content of layoutContent[layout]) {
+                            contentNode.appendChild(content.node);
+                            this.app.events.trigger('prepare_template', {
+                                mode: 'template',
+                                route: content.route
+                            });
                         }
                     } else {
                         console.log('No content node found in layout: ' + layout);
@@ -307,7 +312,14 @@ class Router {
 
             this.showRouteContent(route);
             this.updateTemplate(route);
-            this.app.events.trigger('display', {
+            // if there's a layout call display_layout
+            if(route._layoutnode) {
+                this.app.events.trigger('display_layout', {
+                    mode : 'display',
+                    route : route
+                });
+            }
+            this.app.events.trigger('display_template', {
                 mode : 'display',
                 route : route
             });

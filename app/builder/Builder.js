@@ -74,6 +74,22 @@ export class Builder {
         this.createIndex();
         fs.cpSync('app/builder/_framework', 'build/_framework', {recursive: true});
         fs.cpSync('public/fonts', 'build/fonts', {recursive: true});
+
+        // copy common files
+        this.copyIfExists('public/.htaccess', 'build/.htaccess');
+        this.copyIfExists('public/favicon.ico', 'build/favicon.ico');
+        this.copyIfExists('public/robots.txt', 'build/robots.txt');
+    }
+
+    /**
+     * Copy file if it exists
+     * @param src The source
+     * @param dest The destination
+     */
+    copyIfExists(src, dest) {
+        if(fs.existsSync(src)) {
+            fs.copyFileSync(src, dest);
+        }
     }
 
     /**
