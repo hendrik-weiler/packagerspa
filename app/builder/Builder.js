@@ -92,7 +92,11 @@ export class Builder {
      * @returns {string}
      */
     convertFileNameToVariableName(filePath, ext) {
-        filePath = filePath.replaceAll('/','_').replaceAll('.','_').replaceAll(ext,'');
+        filePath = filePath
+            .replaceAll('/','_')
+            .replaceAll('.','_')
+            .replaceAll('-','_')
+            .replaceAll(ext,'');
         return filePath;
     }
 
@@ -262,8 +266,8 @@ export class Builder {
 
         scriptContent += '<script src="_framework/Router.js"></script>\n';
         scriptContent += '<script src="_framework/Events.js"></script>\n';
-        scriptContent += '<script src="_framework/View.js"></script>\n';
         scriptContent += '<script src="_framework/App.js"></script>\n';
+        scriptContent += '<link rel="stylesheet" href="_framework/app.css"/>\n';
 
         scriptContent += '<script>' + this.addRoutes() + '</script>\n';
         scriptContent += `

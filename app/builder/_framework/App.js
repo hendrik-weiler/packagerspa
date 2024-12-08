@@ -5,7 +5,7 @@ class App {
 
     /**
      * The router instance
-     * @type {null}
+     * @type {Router}
      */
     router = null;
 
@@ -40,10 +40,24 @@ class App {
     events = new Events();
 
     /**
+     * The template node
+     * @type {Element}
+     */
+    templateNode = null;
+
+    /**
+     * The layout node
+     * @type {null}
+     */
+    layoutNode = null;
+
+    /**
      * Constructor
      */
     constructor() {
         this.progressIndicatorElm = document.getElementById('pi');
+        this.templateNode = document.getElementById('templates');
+        this.layoutNode = document.getElementById('layouts');
         this.router = new Router(this);
     }
 
@@ -68,6 +82,7 @@ class App {
         if(config.authcallback) this.authcallback = config.authcallback;
         if(config.basePackages) this.basePackages = config.basePackages;
         await this.loadBasePackages();
+        this.router.prepareViews(this.router.routes);
         this.router.route();
     }
 
