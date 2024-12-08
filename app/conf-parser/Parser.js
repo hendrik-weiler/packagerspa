@@ -148,7 +148,7 @@ export class Parser {
             if(this.currentToken.type === Type.AUTHCALLBACK) {
                 this.eat(Type.AUTHCALLBACK);
                 if(this.currentToken.type === Type.VALUE) {
-                    this.app.authCallback = this.currentToken.value;
+                    this.app.authcallback = this.currentToken.value;
                     this.eat(Type.VALUE);
                 }
                 this.eat(Type.SEMICOLON);

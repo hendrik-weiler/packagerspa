@@ -45,8 +45,15 @@ export class Builder {
         let otherPackages = [];
         // search through all packages
         for (let i = 0; i < app.packages.length; i++) {
-            let pkg = app.packages[i];
+            let pkg = app.packages[i],
+                paths = [];
             for(let path of pkg.directories) {
+                paths.push(path);
+            }
+            for(let path of pkg.files) {
+                paths.push(path);
+            }
+            for(let path of paths) {
                 if(/\.html$/.test(path)) {
                     htmlPackages.push(pkg);
                     break;
@@ -146,6 +153,12 @@ export class Builder {
         fs.writeFileSync(pkgName, content);
     }
 
+    /**
+     * Gets the content from a file
+     * @param content The content file
+     * @param file The file to read from
+     * @returns {{isJs: boolean, isCSS: boolean, content}}
+     */
     getContenFromFile(content, file) {
         let ext = path.extname(file),
             isJs = false,
@@ -196,6 +209,29 @@ export class Builder {
     addRoutes() {
         let content = '';
         for(let route of this.app.routes) {
+
+            // determine the way the package should be loaded
+            for(let i = 0; i < route.depends.length; ++i) {
+                let dep = route.depends[i],
+                    pkg = this.app.packages.find(p => p.name == dep),
+                    isJs = false,
+                    isCss = false,
+                    dirs = pkg.directories.slice(),
+                    paths = dirs.concat(pkg.files);
+                for (let path of paths) {
+                    if(/\.css/.test(path)) {
+                        isCss = true;
+                        break;
+                    }
+                    if(/\.js|\.html/.test(path)) {
+                        isJs = true;
+                        break;
+                    }
+                }
+                if(isCss) route.depends[i] = dep + ':css';
+                if(isJs || !isJs && !isCss) route.depends[i] = dep + ':js';
+            }
+
             content += `
                 app().router.addRoute({
                     path : "${route.path}",
@@ -225,32 +261,25 @@ export class Builder {
         }
 
         scriptContent += '<script src="_framework/Router.js"></script>\n';
+        scriptContent += '<script src="_framework/Events.js"></script>\n';
+        scriptContent += '<script src="_framework/View.js"></script>\n';
         scriptContent += '<script src="_framework/App.js"></script>\n';
 
-        for(i=0; i < app.ui.javascript.length; i++) {
-            let pkg = app.ui.javascript[i];
-            scriptContent += '<script src="'+pkg+'.data.js"></script>\n';
-        }
-
-        for(i=0; i < app.ui.template.length; i++) {
-            let pkg = app.ui.template[i];
-            scriptContent += '<script src="'+pkg+'.data.js"></script>\n';
-        }
-
-        for(i=0; i < app.ui.assets.length; i++) {
-            let pkg = app.ui.assets[i];
-            scriptContent += '<script src="'+pkg+'.data.js"></script>\n';
-        }
-
-        for(i=0; i < app.ui.stylesheets.length; i++) {
-            let pkg = app.ui.stylesheets[i];
-            scriptContent += '<link rel="stylesheet" href="'+pkg+'.data.css"/>\n';
-        }
-
         scriptContent += '<script>' + this.addRoutes() + '</script>\n';
-        scriptContent += '<script>app().init();</script>\n';
+        scriptContent += `
+        <script>app().init({
+            authcallback: "${app.authcallback}",
+            basePackages : {
+                template : ${JSON.stringify(app.ui.template)},
+                assets : ${JSON.stringify(app.ui.assets)},
+                javascript : ${JSON.stringify(app.ui.javascript)},
+                stylesheets : ${JSON.stringify(app.ui.stylesheets)}
+            }
+        });</script>\n
+        `;
 
         indexContent = indexContent.replaceAll('</body>', scriptContent + '</body>');
+        fs.copyFileSync('public/progress-indicator.gif', 'build/progress-indicator.gif');
         fs.writeFileSync('build/index.html', indexContent);
     }
 
