@@ -1,6 +1,7 @@
 import {Type} from "./Type.js";
 import {Token} from "./Token.js";
 import fs from 'fs';
+import path from 'path';
 
 /**
  * Lexer
@@ -331,15 +332,18 @@ export class Lexer {
     replaceIncludes(text, name) {
         let pattern = /include '(.*)';/g;
         let regex = pattern.exec(text);
+        let baseDir = './conf/';
+        let dir = name === 'app.conf' ? '' : path.dirname(name).replace(baseDir,'') + '/';
         while (regex != null) {
-            let filePath = './conf/' + regex[1],
-                fileContents = '';
+            let filePath = baseDir + dir + regex[1],
+                fileContents = '',
+                replaceText = '';
             if(fs.existsSync(filePath)) {
                 fileContents = fs.readFileSync(filePath).toString();
-                text = text.replace(regex[0], fileContents);
-                return this.replaceIncludes(text, filePath);
+                replaceText = this.replaceIncludes(fileContents, filePath);
+                text = text.replace(regex[0], replaceText);
             } else {
-                console.log('Could not load ' + filePath + ' in ' + name);
+                throw new Error('Could not load ' + filePath + ' in ' + name);
             }
             regex = pattern.exec(text);
         }

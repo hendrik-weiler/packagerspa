@@ -32,6 +32,12 @@ export class Parser {
     currentPackage = null;
 
     /**
+     * Anonymous counter
+     * @type {number}
+     */
+    anonymousCounter = 0;
+
+    /**
      * Constructor
      * @param lexer The lexer class
      * @param app The app class
@@ -59,7 +65,7 @@ export class Parser {
      * Checks package
      */
     checkPackage() {
-        while ([Type.OPTION, Type.COMMENT, Type.REQUIRES, Type.SEMICOLON, Type.DIRECTORY, Type.FILE].includes(this.currentToken.type)) {
+        while ([Type.ROUTES, Type.OPTION, Type.COMMENT, Type.REQUIRES, Type.SEMICOLON, Type.DIRECTORY, Type.FILE].includes(this.currentToken.type)) {
             switch(this.currentToken.type) {
                 case Type.REQUIRES:
                     this.eat(Type.REQUIRES);
@@ -99,6 +105,12 @@ export class Parser {
             }
             if(this.currentToken.type === Type.SEMICOLON) {
                 this.eat(Type.SEMICOLON);
+            }
+            if(this.currentToken.type === Type.ROUTES) {
+                this.eat(Type.ROUTES);
+                this.eat(Type.BRACKETS_START);
+                this.checkRoutes(this.currentPackage);
+                this.eat(Type.BRACKETS_END);
             }
         }
     }
@@ -170,19 +182,19 @@ export class Parser {
             switch(this.currentToken.type) {
                 case Type.TEMPLATE:
                     this.eat(Type.TEMPLATE);
-                    this.loopThroughList((value) => this.app.ui.template.push(value));
+                    this.loopThroughList((value) => this.app.ui.template.push(value), true);
                     break;
                 case Type.ASSETS:
                     this.eat(Type.ASSETS);
-                    this.loopThroughList((value) => this.app.ui.assets.push(value));
+                    this.loopThroughList((value) => this.app.ui.assets.push(value), true);
                     break;
                 case Type.JAVASCRIPT:
                     this.eat(Type.JAVASCRIPT);
-                    this.loopThroughList((value) => this.app.ui.javascript.push(value));
+                    this.loopThroughList((value) => this.app.ui.javascript.push(value), true);
                     break;
                 case Type.STYLESHEETS:
                     this.eat(Type.STYLESHEETS);
-                    this.loopThroughList((value) => this.app.ui.stylesheets.push(value));
+                    this.loopThroughList((value) => this.app.ui.stylesheets.push(value), true);
                     break;
             }
             if(this.currentToken.type === Type.COMMENT) {
@@ -212,7 +224,7 @@ export class Parser {
     /**
      * Evaluates the routes
      */
-    checkRoutes() {
+    checkRoutes(currentPackage = null) {
         while ([Type.COMMENT, Type.SEMICOLON, Type.VALUE].includes(this.currentToken.type)) {
             switch(this.currentToken.type) {
                 case Type.VALUE:
@@ -223,7 +235,7 @@ export class Parser {
                     let route = new Route(path, template, []);
                     this.eat(Type.VALUE);
                     this.parseRouteLayout(route);
-                    this.loopThroughList((value) => route.depends.push(value));
+                    this.loopThroughList((value) => route.depends.push(value), true);
                     while ([Type.COMMA, Type.LAYOUT, Type.INDEX, Type.ERROR404, Type.PRIVATE].includes(this.currentToken.type)) {
                         if(this.currentToken.type === Type.COMMA) {
                             this.eat(Type.COMMA);
@@ -231,7 +243,11 @@ export class Parser {
                         this.routeOptions(route);
                         this.parseRouteLayout(route);
                     }
-                    this.app.routes.push(route);
+                    if(currentPackage) {
+                        currentPackage.routes.push(route);
+                    } else {
+                        this.app.routes.push(route);
+                    }
                     this.eat(Type.SEMICOLON);
                     break;
             }
@@ -266,17 +282,31 @@ export class Parser {
     /**
      * Loops througha  list
      * @param callback The callback for function for getting the value
+     * @param pkg Determines if packages in the list are allowed
      */
-    loopThroughList(callback) {
+    loopThroughList(callback, pkg = false) {
         if (this.currentToken.type === Type.SQUARE_BRACKETS_START) {
             this.eat(Type.SQUARE_BRACKETS_START);
-            while ([Type.VALUE, Type.COMMA].includes(this.currentToken.type)) {
+            while ([Type.VALUE, Type.COMMA, Type.PACKAGE].includes(this.currentToken.type)) {
                 if (this.currentToken.type === Type.COMMA) {
                     this.eat(Type.COMMA);
                 }
                 if (this.currentToken.type === Type.VALUE) {
                     callback(this.currentToken.value);
                     this.eat(Type.VALUE);
+                }
+                if(this.currentToken.type === Type.PACKAGE) {
+                    if(!pkg) this.lexer.error();
+                    this.eat(Type.PACKAGE);
+                    this.eat(Type.BRACKETS_START);
+                    let name = 'anonymous-' + (this.anonymousCounter++);
+                    this.currentPackage = new Package(name);
+                    this.app.packages.push(this.currentPackage);
+
+                    this.checkPackage();
+
+                    this.eat(Type.BRACKETS_END);
+                    callback(name);
                 }
             }
             this.eat(Type.SQUARE_BRACKETS_END);

@@ -134,15 +134,24 @@ class Router {
         let layoutContent = {};
         for (let route of routes) {
             if(route.layout === 'null') {
-                let template = this.convertFileNameToVariableName(route.template);
-                let node = this.createNodeFromTemplate(template);
-                if(node) {
-                    this.app.templateNode.appendChild(node);
-                    route._varname = template;
-                    route._node = node;
+                let template = this.convertFileNameToVariableName(route.template),
+                    existingTemplateNode = this.app.templateNode.querySelector('[data-template="'+template+'"]'),
+                    node = null;
+                if(!existingTemplateNode) {
+                    node = this.createNodeFromTemplate(template);
+                    if(node) {
+                        this.app.templateNode.appendChild(node);
+                        route._varname = template;
+                        route._node = node;
+                        this.removeUnresolvedRoute(route);
+                    } else {
+                        console.log('Template not found: ' + template);
+                        this.removeUnresolvedRoute(route);
+                        this.unresolvedRoutes.push(route);
+                    }
                 } else {
-                    console.log('Template not found: ' + template);
-                    this.unresolvedRoutes.push(route);
+                    node = existingTemplateNode;
+                    route._node = node;
                 }
 
             } else {
@@ -162,6 +171,7 @@ class Router {
                         this.removeUnresolvedRoute(route);
                     } else {
                         console.log('Layout not found: ' + layoutTemplate);
+                        this.removeUnresolvedRoute(route);
                         this.unresolvedRoutes.push(route);
                     }
                 } else {
@@ -189,6 +199,7 @@ class Router {
                     } else {
                         console.log('Template not found: ' + template);
                         console.log(route)
+                        this.removeUnresolvedRoute(route);
                         this.unresolvedRoutes.push(route);
                     }
                 } else {
@@ -324,5 +335,12 @@ class Router {
                 route : route
             });
         });
+    }
+
+    /**
+     * Updates the routes
+     */
+    updateRoutes() {
+        this.prepareViews(this.routes);
     }
 }

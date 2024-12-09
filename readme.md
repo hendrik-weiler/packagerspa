@@ -18,11 +18,30 @@ to lazy load additional data during routing.
 - `node build.js` build the project
 - `node watch.js` watch the project and build it
 
+Theres additionally files for osx, linux and windows
+
+linux, osx:
+- `build.sh`
+- `watch.sh`
+
+windows:
+- `build.bat`
+- `watch.bat`
+
 ### Configuration
 
 In the conf folder there are bunch of .conf files.
 The app.conf will be read from node but you can include other .conf files
 to further structure your configuration.
+
+### Common files to build folder
+
+When specific files exist in the `public` folder these will be copied to the build folder
+
+- .htaccess
+- `custom` folder for everything else
+- favicon.ico
+- robots.txt
 
 #### Create a package
 
@@ -42,7 +61,7 @@ package 'package-name' {
 }
 ```
 
-#### Add routes
+#### Add global routes
 
 The route /404 is flagged as error404 page.
 The route / is flagged as index page.
@@ -52,6 +71,40 @@ routes {
     '/': 'login.html', index,layout: 'layout/login.html';
 }
 ```
+
+##### Package routes
+
+You can add routes to a package. 
+When the package gets loaded the routes will be added to the routing.
+```
+package 'about' {
+    file 'public/templates/about.html';
+    file 'public/templates/layout/about-layout.html'; // test
+    file 'public/js/about.js';
+
+    routes {
+        '/about': 'about.html' ['about'],layout: 'layout/about-layout.html';
+    }
+}
+```
+
+#### Anonymous packages on route packages and ui
+
+You can add anonymous packages to routes in a package.
+```
+routes {
+    '/404': '404.html', error404;
+    '/': 'login.html' [package {
+        file 'public/img/splash.png';
+        routes {
+            '/ohmy': 'login.html' [package {
+                file 'public/img/splash.png';
+            }];
+        }
+    }], index,layout: 'layout/login.html';
+}
+```
+You can also create anonymous packages in the ui.
 
 #### Add dependencies to a route
 

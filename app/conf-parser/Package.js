@@ -34,6 +34,12 @@ export class Package {
     options = [];
 
     /**
+     * Routes
+     * @type {[Route]}
+     */
+    routes = [];
+
+    /**
      * Constructor
      * @param name
      */

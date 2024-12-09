@@ -79,6 +79,11 @@ export class Builder {
         this.copyIfExists('public/.htaccess', 'build/.htaccess');
         this.copyIfExists('public/favicon.ico', 'build/favicon.ico');
         this.copyIfExists('public/robots.txt', 'build/robots.txt');
+
+        // when a custom folder exists, copy it to the build folder
+        if(fs.existsSync('public/custom')) {
+            fs.cpSync('public/custom', 'build/custom', {recursive: true});
+        }
     }
 
     /**
@@ -154,6 +159,10 @@ export class Builder {
             i,
             isJs = false,
             isCSS = false;
+        if(pkg.routes.length > 0) {
+            content += this.addRoutes(pkg.routes);
+            content += 'app().router.updateRoutes();\n';
+        }
         for(i=0; i < pkg.files.length; i++) {
             let file = pkg.files[i];
             let result = this.getContenFromFile(content, file);
@@ -204,6 +213,20 @@ export class Builder {
             this.imagesToEmbed[filepath] = base64Content;
             content += fileContent;
             isJs = true;
+        } else if(ext === '.jpg') {
+            let filepath = this.convertFileNameToVariableName(file,'.jpg');
+            let base64Content = this.toBase64('image/jpeg', file);
+            let fileContent = 'var '+ filepath +' = "' + base64Content +'";\n';
+            this.imagesToEmbed[filepath] = base64Content;
+            content += fileContent;
+            isJs = true;
+        } else if(ext === '.gif') {
+            let filepath = this.convertFileNameToVariableName(file,'.gif');
+            let base64Content = this.toBase64('image/gif', file);
+            let fileContent = 'var '+ filepath +' = "' + base64Content +'";\n';
+            this.imagesToEmbed[filepath] = base64Content;
+            content += fileContent;
+            isJs = true;
         } else if(ext === '.js') {
             content += fs.readFileSync(file) + ';\n';
             isJs = true;
@@ -228,17 +251,19 @@ export class Builder {
      * Add routes
      * @returns {string}
      */
-    addRoutes() {
+    addRoutes(routes) {
         let content = '';
-        for(let route of this.app.routes) {
-
+        for(let route of routes) {
             // determine the way the package should be loaded
             for(let i = 0; i < route.depends.length; ++i) {
                 let dep = route.depends[i],
-                    pkg = this.app.packages.find(p => p.name == dep),
+                    pkg = this.app.packages.find(p => p.name === dep),
                     isJs = false,
-                    isCss = false,
-                    dirs = pkg.directories.slice(),
+                    isCss = false;
+                if(!pkg) {
+                    throw new Error('Package not found: ' + dep);
+                }
+                let dirs = pkg.directories.slice(),
                     paths = dirs.concat(pkg.files);
                 for (let path of paths) {
                     if(/\.css/.test(path)) {
@@ -288,7 +313,7 @@ export class Builder {
         scriptContent += '<script src="_framework/App.js?'+Date.now()+'"></script>\n';
         scriptContent += '<link rel="stylesheet" href="_framework/app.css?'+Date.now()+'"/>\n';
 
-        scriptContent += '<script>' + this.addRoutes() + '</script>\n';
+        scriptContent += '<script>' + this.addRoutes(this.app.routes) + '</script>\n';
         scriptContent += `
         <script>app().init({
             middlewares: ${JSON.stringify(app.middlewares)},
