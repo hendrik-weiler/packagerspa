@@ -231,7 +231,7 @@ export class Builder {
             content += fs.readFileSync(file) + ';\n';
             isJs = true;
         } else if(ext === '.css') {
-            content += fs.readFileSync(file) + ';\n';
+            content += fs.readFileSync(file) + '\n\n';
             isCSS = true;
         }
         return {content, isJs, isCSS};

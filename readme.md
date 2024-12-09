@@ -43,6 +43,20 @@ When specific files exist in the `public` folder these will be copied to the bui
 - favicon.ico
 - robots.txt
 
+#### Include a configuration file
+
+You can include a configuration file in another configuration file.
+```
+include 'path/to/file.conf';
+```
+
+#### Comments
+
+You can add comments to the configuration files.
+```
+// This is a comment
+```
+
 #### Create a package
 
 ```
