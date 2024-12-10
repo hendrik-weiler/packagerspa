@@ -60,7 +60,9 @@ class Router {
      */
     route() {
       let path = window.location.hash,
-          found = false;
+          found = false,
+          pattern,
+          groups;
         if(path === '') {
             if(this.indexRoute) {
                 this.callRoute(this.indexRoute);
@@ -68,7 +70,14 @@ class Router {
             }
         }
       for (let route of this.routes) {
-        if (new RegExp('^#'+route.path+'(/)?$').test(path)) {
+        pattern = '^#'+route.path+'(/)?$';
+        if (new RegExp(pattern).test(path)) {
+            groups = path.match(new RegExp(pattern));
+            this.app.urlParams = [];
+            for (let i = 1; i < groups.length; i++) {
+                this.app.urlParams.push(groups[i]);
+            }
+            this.app.urlParams.pop();
             found = true;
             console.log('Route found');
             this.callRoute(route);

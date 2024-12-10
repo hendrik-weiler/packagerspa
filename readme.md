@@ -43,6 +43,12 @@ When specific files exist in the `public` folder these will be copied to the bui
 - favicon.ico
 - robots.txt
 
+#### Url parameters
+
+There are two ways to read url parameters.
+- In the url use regex to match the parameters for example `'/test/([0-9]+)' : 'login.html';`. The matches are available in `app().urlParams`. It is an array.
+- Retrieve get parameters using `app().getParams.get('param')`
+
 #### Include a configuration file
 
 You can include a configuration file in another configuration file.

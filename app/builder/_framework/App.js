@@ -52,6 +52,18 @@ class App {
     layoutNode = null;
 
     /**
+     * The url params
+     * @type {[]}
+     */
+    urlParams = [];
+
+    /**
+     * The get parameter function
+     * @type {null}
+     */
+    getParams = new URLSearchParams(window.location.search);
+
+    /**
      * Constructor
      */
     constructor() {
