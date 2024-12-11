@@ -85,11 +85,21 @@ package 'package-name' {
 
 The route /404 is flagged as error404 page.
 The route / is flagged as index page.
+You can flag a route as dialog
 ```
 routes {
+    '/dialog': 'dialog.html', dialog;
     '/404': '404.html', error404;
     '/': 'login.html', index,layout: 'layout/login.html';
 }
+```
+
+#### Dialogs
+
+You can open/close a dialog for example
+```
+<a onclick="app().showModal('/dialog');" href="javascript:">Show test dialog</a>
+<a onclick="app().closeDialog();" href="javascript:">Close current dialog</a>
 ```
 
 ##### Package routes
