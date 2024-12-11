@@ -52,6 +52,12 @@ class App {
     layoutNode = null;
 
     /**
+     * The dialogs node
+     * @type {null}
+     */
+    dialogsNode = null;
+
+    /**
      * The url params
      * @type {[]}
      */
@@ -64,12 +70,25 @@ class App {
     getParams = new URLSearchParams(window.location.search);
 
     /**
+     * The current dialog route
+     * @type {null}
+     */
+    currentDialogRoute = null;
+
+    /**
+     * The initialized flag
+     * @type {boolean}
+     */
+    initialized = false;
+
+    /**
      * Constructor
      */
     constructor() {
         this.progressIndicatorElm = document.getElementById('pi');
         this.templateNode = document.getElementById('templates');
         this.layoutNode = document.getElementById('layouts');
+        this.dialogsNode = document.getElementById('dialogs');
         this.router = new Router(this);
     }
 
@@ -93,9 +112,12 @@ class App {
     async init(config) {
         if(config.middlewares) this.middlewares = config.middlewares;
         if(config.basePackages) this.basePackages = config.basePackages;
+        console.log('Base packages', this.basePackages);
         await this.loadBasePackages();
+        console.log('Base packages loaded');
         this.router.prepareViews(this.router.routes);
         this.router.route();
+        this.initialized = true;
     }
 
     /**
@@ -162,6 +184,30 @@ class App {
      */
     isPackageLoaded(pgkName) {
         return this.packageLoaded.includes(pgkName);
+    }
+
+    /**
+     * Shows a modal based on a path
+     * @param path The path to the template
+     */
+    async showModal(path) {
+       this.currentDialogRoute = await this.router.showModal(path);
+    }
+
+    /**
+     * Closes a dialog based on a path
+     * @param path The path to the dialog
+     */
+    closeDialog(path) {
+        if(arguments.length===0) {
+            if(this.currentDialogRoute) {
+                path = this.currentDialogRoute.path;
+            } else {
+                console.log('No dialog to close');
+                return;
+            }
+        }
+        this.router.closeDialog(path);
     }
 }
 

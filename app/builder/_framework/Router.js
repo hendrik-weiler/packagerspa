@@ -126,6 +126,23 @@ class Router {
     }
 
     /**
+     * Create a dialog node from a template
+     * @param templateVar The template variable
+     * @returns {HTMLDivElement|null}
+     */
+    createDialogNodeFromTemplate(templateVar) {
+        if(window[templateVar]) {
+            let node = document.createElement('dialog');
+            node.dataset.template = templateVar;
+            node.classList.add('dialog')
+            node.innerHTML = window[templateVar];
+            return node;
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Removes an unresolved route
      * @param route The route
      */
@@ -143,24 +160,54 @@ class Router {
         let layoutContent = {};
         for (let route of routes) {
             if(route.layout === 'null') {
-                let template = this.convertFileNameToVariableName(route.template),
-                    existingTemplateNode = this.app.templateNode.querySelector('[data-template="'+template+'"]'),
-                    node = null;
-                if(!existingTemplateNode) {
-                    node = this.createNodeFromTemplate(template);
-                    if(node) {
-                        this.app.templateNode.appendChild(node);
-                        route._varname = template;
-                        route._node = node;
-                        this.removeUnresolvedRoute(route);
+                if(route.dialog) {
+                    let template = this.convertFileNameToVariableName(route.template),
+                        existingDialogNode = this.app.dialogsNode.querySelector('[data-template="'+template+'"]'),
+                        node = null;
+                    if(!existingDialogNode) {
+                        node = this.createDialogNodeFromTemplate(template);
+                        if(node) {
+                            this.app.dialogsNode.appendChild(node);
+                            route._varname = template;
+                            route._node = node;
+                            this.app.events.trigger('prepare_template', {
+                                mode: 'template',
+                                route: route
+                            });
+                            this.removeUnresolvedRoute(route);
+                        } else {
+                            console.log('Template dialog not found: ' + template);
+                            this.removeUnresolvedRoute(route);
+                            this.unresolvedRoutes.push(route);
+                        }
                     } else {
-                        console.log('Template not found: ' + template);
-                        this.removeUnresolvedRoute(route);
-                        this.unresolvedRoutes.push(route);
+                        node = existingDialogNode;
+                        route._node = node;
                     }
                 } else {
-                    node = existingTemplateNode;
-                    route._node = node;
+                    let template = this.convertFileNameToVariableName(route.template),
+                        existingTemplateNode = this.app.templateNode.querySelector('[data-template="'+template+'"]'),
+                        node = null;
+                    if(!existingTemplateNode) {
+                        node = this.createNodeFromTemplate(template);
+                        if(node) {
+                            this.app.templateNode.appendChild(node);
+                            route._varname = template;
+                            route._node = node;
+                            this.app.events.trigger('prepare_template', {
+                                mode: 'template',
+                                route: route
+                            });
+                            this.removeUnresolvedRoute(route);
+                        } else {
+                            console.log('Template not found: ' + template);
+                            this.removeUnresolvedRoute(route);
+                            this.unresolvedRoutes.push(route);
+                        }
+                    } else {
+                        node = existingTemplateNode;
+                        route._node = node;
+                    }
                 }
 
             } else {
@@ -286,12 +333,28 @@ class Router {
     showRouteContent(route) {
         for (let theRoute of this.routes) {
             if(theRoute._layoutnode && !theRoute._layoutnode.classList.contains('hidden')) theRoute._layoutnode.classList.add('hidden');
-            if(theRoute._node && !theRoute._node.classList.contains('hidden')) theRoute._node.classList.add('hidden');
+            if(theRoute._node && !theRoute._node.classList.contains('hidden')) {
+                if(theRoute.dialog) {
+                    theRoute._node.close();
+                } else {
+                    theRoute._node.classList.add('hidden');
+                }
+            }
         }
         if(route._layoutnode) route._layoutnode.classList.remove('hidden');
         if(route._node) route._node.classList.remove('hidden');
+        if(route.dialog) {
+            route._node.showModal();
+        }
     }
 
+    /**
+     * Walks through the middlewares
+     * @param route The route
+     * @param middlewares The middlewares
+     * @param next Call to go throug the chain
+     * @returns {Promise<void>}
+     */
     async walkThroughMiddlewares(route, middlewares ,next) {
         if(middlewares.length === 0) {
             next();
@@ -310,25 +373,34 @@ class Router {
     }
 
     /**
+     * Load dependencies from array
+     * @param dependencies The dependencies
+     * @returns {Promise<void>}
+     */
+    async loadDependencies(dependencies) {
+        for (let dep of dependencies) {
+            if(!this.app.isPackageLoaded(dep.replace(':js','').replace(':css',''))) {
+                this.app.showPi();
+                if(/:js/.test(dep)) {
+                    await this.app.loadJs(dep.replace(':js',''));
+                }
+                if(/:css/.test(dep)) {
+                    await this.app.loadCss(dep.replace(':css',''));
+                }
+                this.prepareViews(this.unresolvedRoutes.slice());
+                this.app.hidePi();
+            }
+        }
+    }
+
+    /**
      * Calls a route
      * @param route The route
      */
     async callRoute(route) {
         console.log('view route', route);
         this.walkThroughMiddlewares(route, this.app.middlewares.slice(), async () => {
-            for (let dep of route.depends) {
-                if(!this.app.isPackageLoaded(dep.replace(':js','').replace(':css',''))) {
-                    this.app.showPi();
-                    if(/:js/.test(dep)) {
-                        await this.app.loadJs(dep.replace(':js',''));
-                    }
-                    if(/:css/.test(dep)) {
-                        await this.app.loadCss(dep.replace(':css',''));
-                    }
-                    this.prepareViews(this.unresolvedRoutes.slice());
-                    this.app.hidePi();
-                }
-            }
+            await this.loadDependencies(route.depends);
 
             this.showRouteContent(route);
             this.updateTemplate(route);
@@ -350,6 +422,72 @@ class Router {
      * Updates the routes
      */
     updateRoutes() {
+        if(!this.app.initialized) return;
         this.prepareViews(this.routes);
+    }
+
+    /**
+     * Shows a modal based on a path
+     * @param path The path to the template
+     */
+    async showModal(path) {
+        for (let theRoute of this.routes) {
+            if(theRoute.path === path) {
+                if(theRoute._node) {
+                    await this.loadDependencies(theRoute.depends);
+                    theRoute._node.showModal();
+                    this.app.events.trigger('display_template', {
+                        mode : 'display',
+                        route : theRoute
+                    });
+                    return theRoute;
+                } else {
+                    console.log('No dialog found for route');
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Shows a dialog based on a route
+     * @param route The route
+     */
+    showModalByRoute(route) {
+        if(route._node) {
+            route._node.showModal();
+        } else {
+            console.log('No dialog found for route');
+        }
+    }
+
+    /**
+     * Shows a dialog based on a route
+     * @param route
+     */
+    closeDialogByRoute(route) {
+        if(route._node) {
+            route._node.close();
+        } else {
+            console.log('No dialog found for route');
+        }
+    }
+
+    /**
+     * Closes a dialog based on a path
+     * @param path The path to the template
+     */
+    closeDialog(path) {
+        for (let theRoute of this.routes) {
+            if(theRoute.path === path) {
+                if(theRoute._node) {
+                    theRoute._node.close();
+                    return theRoute;
+                } else {
+                    console.log('No dialog found for route');
+                }
+            }
+        }
+        return null;
     }
 }

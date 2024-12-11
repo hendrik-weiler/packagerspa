@@ -32,6 +32,23 @@ export class Builder {
     constructor(parser) {
         this.parser = parser;
         this.parser.parse();
+        this.findErrors();
+    }
+
+    findErrors() {
+        let app = this.app = this.parser.app;
+        let routes = app.routes;
+        for(let route of routes) {
+            for(let dep of route.depends) {
+                let pkg = app.packages.find(p => p.name === dep);
+                if(!pkg) {
+                    throw new Error('Package not found: ' + dep + ' in route: ' + route.path);
+                }
+            }
+            if(route.dialog && route.layout) {
+                throw new Error('Dialog cannot have a layout: ' + route.path);
+            }
+        }
     }
 
     /**
@@ -286,6 +303,7 @@ export class Builder {
                     error404 : ${route.error404},
                     layout : "${route.layout}",
                     index : ${route.index},
+                    dialog : ${route.dialog},
                     depends : ${JSON.stringify(route.depends)},
                     private : ${route.private}
                 });
