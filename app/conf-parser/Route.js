@@ -45,6 +45,12 @@ export class Route {
     private = false;
 
     /**
+     * Is this a dialog route
+     * @type {boolean}
+     */
+    dialog = false;
+
+    /**
      * Constructor
      * @param path The path of the route
      * @param template The template of the route

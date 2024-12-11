@@ -31,4 +31,5 @@ export var Type = {
     INDEX: 'index',
     FILE : 'file',
     PRIVATE : 'private',
+    DIALOG : 'dialog',
 };

@@ -299,6 +299,11 @@ export class Lexer {
             return new Token(Type.PRIVATE, null);
         }
 
+        if(this.findKeyword('dialog', 6)) {
+            this.advance(6);
+            return new Token(Type.DIALOG, null);
+        }
+
         this.error();
     }
 

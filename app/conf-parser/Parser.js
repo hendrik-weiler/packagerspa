@@ -277,6 +277,10 @@ export class Parser {
             this.eat(Type.PRIVATE);
             route.private = true;
         }
+        if(this.currentToken.type === Type.DIALOG) {
+            this.eat(Type.DIALOG);
+            route.dialog = true;
+        }
     }
 
     /**
