@@ -76,6 +76,12 @@ class App {
     currentDialogRoute = null;
 
     /**
+     * The dialog routes queue
+     * @type {[]}
+     */
+    dialogRoutesQueue = [];
+
+    /**
      * The initialized flag
      * @type {boolean}
      */
@@ -192,6 +198,7 @@ class App {
      */
     async showModal(path) {
        this.currentDialogRoute = await this.router.showModal(path);
+       this.dialogRoutesQueue.push(this.currentDialogRoute);
     }
 
     /**
@@ -200,12 +207,12 @@ class App {
      */
     closeDialog(path) {
         if(arguments.length===0) {
-            if(this.currentDialogRoute) {
-                path = this.currentDialogRoute.path;
-            } else {
+            if(this.dialogRoutesQueue.length === 0) {
                 console.log('No dialog to close');
                 return;
             }
+            let dialogRoute = this.dialogRoutesQueue.pop();
+            path = dialogRoute.path;
         }
         this.router.closeDialog(path);
     }
