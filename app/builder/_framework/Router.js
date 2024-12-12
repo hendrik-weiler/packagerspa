@@ -247,6 +247,7 @@ class Router {
                         this.app.layoutNode.appendChild(node);
                         route._varname = template;
                         route._node = node;
+                        route._prepared = false;
                         layoutContent[layoutTemplate].push({
                             node: node,
                             route: route
@@ -254,7 +255,6 @@ class Router {
                         this.removeUnresolvedRoute(route);
                     } else {
                         console.log('Template not found: ' + template);
-                        console.log(route)
                         this.removeUnresolvedRoute(route);
                         this.unresolvedRoutes.push(route);
                     }
@@ -266,6 +266,7 @@ class Router {
                     });
                 }
             }
+
             for(let layout in layoutContent) {
                 let layoutNode = this.app.layoutNode.querySelector('[data-template="'+layout+'"]');
                 if(layoutNode) {
@@ -273,10 +274,13 @@ class Router {
                     if(contentNode) {
                         for (let content of layoutContent[layout]) {
                             contentNode.appendChild(content.node);
-                            this.app.events.trigger('prepare_template', {
-                                mode: 'template',
-                                route: content.route
-                            });
+                            if(!content.route._prepared) {
+                                this.app.events.trigger('prepare_template', {
+                                    mode: 'template',
+                                    route: content.route
+                                });
+                                content.route._prepared = true;
+                            }
                         }
                     } else {
                         console.log('No content node found in layout: ' + layout);

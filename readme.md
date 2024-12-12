@@ -90,6 +90,8 @@ You can flag a route as dialog
 routes {
     '/dialog': 'dialog.html', dialog;
     '/404': '404.html', error404;
+    // you can flag a route as private and can be checked in a middleware
+    '/private-page': 'login.html', private;
     '/': 'login.html', index,layout: 'layout/login.html';
 }
 ```
