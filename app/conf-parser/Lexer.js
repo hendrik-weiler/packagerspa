@@ -39,13 +39,19 @@ export class Lexer {
     currentChar = '';
 
     /**
-     * Constructor
-     * @param text
+     * Filename
+     * @type {string}
      */
-    constructor(text) {
+    filename = '';
+
+    /**
+     * Constructor
+     * @param text The text
+     * @param filename The filename
+     */
+    constructor(text, filename) {
         this.text = text;
-        this.text = this.replaceIncludes(this.text, 'app.conf');
-        console.log(this.text);
+        this.filename = filename;
         this.currentChar = text[this.pos];
     }
 
@@ -229,6 +235,11 @@ export class Lexer {
             return new Token(Type.PACKAGE, null);
         }
 
+        if(this.findKeyword('include', 7)) {
+            this.advance(7);
+            return new Token(Type.INCLUDE, null);
+        }
+
         if(this.findKeyword('directory', 9)) {
             this.advance(9);
             return new Token(Type.DIRECTORY, null);
@@ -304,14 +315,15 @@ export class Lexer {
             return new Token(Type.DIALOG, null);
         }
 
-        this.error();
+        this.error(undefined, this.filename);
     }
 
     /**
      * Throws an error
      * @param type The type to consume from parser
+     * @param file The file name
      */
-    error(type) {
+    error(type, file) {
         let codeSnippet = '',
             tokenType = type || 'none';
         for(let i = this.pos - 10; i < this.pos; i++) {
@@ -324,34 +336,10 @@ export class Lexer {
         }
         if(tokenType !== 'none') {
             throw new Error(`Invalid character ${this.currentChar} at line ${this.line} position ${this.linePos}: 
-            ${codeSnippet} expected ${tokenType}`);
+            ${codeSnippet} expected ${tokenType} in file ${file}`);
         } else {
             throw new Error(`Invalid character ${this.currentChar} at line ${this.line} position ${this.linePos}: 
-            ${codeSnippet}`);
+            ${codeSnippet} in file ${file}`);
         }
-    }
-
-    /**
-     * Replaces includes with the files content
-     */
-    replaceIncludes(text, name) {
-        let pattern = /include '(.*)';/g;
-        let regex = pattern.exec(text);
-        let baseDir = './conf/';
-        let dir = name === 'app.conf' ? '' : path.dirname(name).replace(baseDir,'') + '/';
-        while (regex != null) {
-            let filePath = baseDir + dir + regex[1],
-                fileContents = '',
-                replaceText = '';
-            if(fs.existsSync(filePath)) {
-                fileContents = fs.readFileSync(filePath).toString();
-                replaceText = this.replaceIncludes(fileContents, filePath);
-                text = text.replace(regex[0], replaceText);
-            } else {
-                throw new Error('Could not load ' + filePath + ' in ' + name);
-            }
-            regex = pattern.exec(text);
-        }
-        return text;
     }
 }

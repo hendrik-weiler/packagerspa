@@ -1,6 +1,9 @@
 import {Type} from "./Type.js";
 import {Package} from "./Package.js";
 import {Route} from "./Route.js";
+import {Lexer} from "./Lexer.js";
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Parses a conf file
@@ -38,14 +41,71 @@ export class Parser {
     anonymousCounter = 0;
 
     /**
+     * Contains the pool of lexers for the different files
+     * @type {[]}
+     */
+    tokenPool = [];
+
+    /**
+     * Contains the last token pool
+     * @type {[]}
+     */
+    lastTokenPool = [];
+
+    /**
+     * The current pool
+     * @type {null}
+     */
+    currentPool = null;
+
+    /**
      * Constructor
-     * @param lexer The lexer class
      * @param app The app class
      */
-    constructor(lexer, app) {
-        this.lexer = lexer;
+    constructor(app) {
         this.app = app;
-        this.currentToken = this.lexer.getNextToken();
+    }
+
+    /**
+     * Lexes the text
+     * @param text The text to parse
+     * @param filePath The file path
+     */
+    lexerText(text, filePath) {
+        let lexer = new Lexer(text, filePath);
+        let baseDir = './conf/';
+        this.currentToken = lexer.getNextToken();
+        this.tokenPool.push({
+            dir : path.dirname(filePath).replace(baseDir,'') + '/',
+            file: filePath,
+            lexer: lexer
+        });
+        this.currentPool = this.tokenPool[this.tokenPool.length - 1];
+    }
+
+    /**
+     * Lexes a file
+     * @param name The path to the file
+     */
+    lexerFromFile(name) {
+        let baseDir = './conf/';
+        let dir = name === 'app.conf' ? '' : path.dirname(name).replace(baseDir,'') + '/';
+        let thedir = '';
+        if(this.currentPool && this.currentPool.dir) {
+            thedir = this.currentPool.dir.replace(baseDir,'') + '/';
+        }
+        let filePath = baseDir + thedir + dir + path.basename(name);
+        filePath = filePath.replace('//','/');
+
+        if(fs.existsSync(filePath)) {
+            const fileContents = fs.readFileSync(filePath).toString();
+            if(this.currentPool) {
+                this.lastTokenPool.push(this.currentToken);
+            }
+            this.lexerText(fileContents, filePath);
+        } else {
+            throw new Error('File not found to include: ' + filePath + ' in file ' + this.currentPool.file);
+        }
     }
 
     /**
@@ -53,11 +113,13 @@ export class Parser {
      * @param type
      */
     eat(type) {
-        //console.log('trying to eat: ' + type);
+        let poolElement = this.currentPool,
+            lexer = poolElement.lexer;
+        //console.log('trying to eat: ' + type + ' in file ' + poolElement.file);
         if(this.currentToken.type === type) {
-            this.currentToken = this.lexer.getNextToken();
+            this.currentToken = lexer.getNextToken();
         } else {
-            this.lexer.error(type);
+            lexer.error(type, poolElement.file);
         }
     }
 
@@ -125,9 +187,23 @@ export class Parser {
             Type.SEMICOLON,
             Type.ROUTES,
             Type.UI,
-            Type.MIDDLEWARE
+            Type.MIDDLEWARE,
+            Type.INCLUDE,
+            Type.EOL
         ].includes(this.currentToken.type)) {
-
+            if(this.currentToken.type === Type.EOL) {
+                this.eat(Type.EOL);
+                let lastPool = this.tokenPool.pop();
+                let lastToken = this.lastTokenPool.pop();
+                this.currentPool = this.tokenPool[this.tokenPool.length - 1];
+                // if theres no pool left end the parsing
+                if(!this.currentPool) {
+                    break;
+                }
+                if(lastToken) {
+                    this.currentToken = lastToken;
+                }
+            }
             if(this.currentToken.type === Type.PACKAGE) {
                 this.eat(Type.PACKAGE);
                 if(this.currentToken.type === Type.VALUE) {
@@ -140,6 +216,10 @@ export class Parser {
                 this.checkPackage();
 
                 this.eat(Type.BRACKETS_END);
+            }
+            if(this.currentToken.type === Type.INCLUDE) {
+                this.eat(Type.INCLUDE);
+                this.includeFile();
             }
             if(this.currentToken.type === Type.ROUTES) {
                 this.eat(Type.ROUTES);
@@ -172,6 +252,16 @@ export class Parser {
                 this.eat(Type.SEMICOLON);
             }
         }
+    }
+
+    /**
+     * Includes a file
+     */
+    includeFile() {
+        let path = this.currentToken.value;
+        this.eat(Type.VALUE);
+        this.eat(Type.SEMICOLON);
+        this.lexerFromFile(path);
     }
 
     /**
@@ -300,7 +390,7 @@ export class Parser {
                     this.eat(Type.VALUE);
                 }
                 if(this.currentToken.type === Type.PACKAGE) {
-                    if(!pkg) this.lexer.error();
+                    if(!pkg) this.lexer.error(this.currentToken.type, this.tokenPool[this.fileIndex].file);
                     this.eat(Type.PACKAGE);
                     this.eat(Type.BRACKETS_START);
                     let name = 'anonymous-' + (this.anonymousCounter++);
