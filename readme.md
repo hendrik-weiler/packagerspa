@@ -190,3 +190,36 @@ It will be added to the style attribute of the element.
 
 For images `data-src="img/logo.svg"` to set the src of the image.
 You can additionally use `<img embed src="img/logo.svg">` to embed the image in the template.
+
+### Working with views
+
+When a route is loaded an event will be called. When the route is called through hash change
+another event will be called.
+You can listen to the event and manipulate the data.
+```
+// events for templates
+// gets called once
+app().events.on('prepare_template', function(e) {
+    if(e.route.path !== '/nested') return; // check if the route is the one you want
+    console.log('prepare nested', e.route.path);
+});
+
+// gets called every time the route is called
+app().events.on('display_template', function(e) {
+    if(e.route.path !== '/nested') return;
+    console.log('display nested', e);
+});
+
+// events for layout
+// gets called once
+app().events.on('prepare_layout', function(e) {
+    if(e.route.layout !== 'layout/login.html') return; // check if the layout is the one you want
+    console.log('prepare layout login', e.route.path);
+});
+
+// gets called every time the layout is called
+app().events.on('display_layout', function(e) {
+    if(e.route.layout !== 'layout/login.html') return; // check if the layout is the one you want
+    console.log('display layout login', e);
+});
+```

@@ -198,6 +198,7 @@ class App {
      */
     async showModal(path) {
        this.currentDialogRoute = await this.router.showModal(path);
+       if(this.dialogRoutesQueue.includes(this.currentDialogRoute)) return;
        this.dialogRoutesQueue.push(this.currentDialogRoute);
     }
 
