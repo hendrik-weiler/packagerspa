@@ -197,9 +197,11 @@ class App {
      * @param path The path to the template
      */
     async showModal(path) {
-       this.currentDialogRoute = await this.router.showModal(path);
-       if(this.dialogRoutesQueue.includes(this.currentDialogRoute)) return;
-       this.dialogRoutesQueue.push(this.currentDialogRoute);
+        // Check if the dialog is already open
+        let result = this.dialogRoutesQueue.find((dialogRoute) => dialogRoute.path === path);
+        if(result) return; // Dialog is already open
+        this.currentDialogRoute = await this.router.showModal(path);
+        this.dialogRoutesQueue.push(this.currentDialogRoute);
     }
 
     /**
